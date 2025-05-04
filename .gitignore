@@ -1,0 +1,5 @@
+/venv
+.env
+feedback_cal.txt
+.vscode
+.db
