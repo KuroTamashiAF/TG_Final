@@ -61,3 +61,6 @@ class Cart(Base):
 
     user: Mapped["User"] = relationship(backref="cart")
     product: Mapped["Product"] = relationship(backref="cart")
+
+
+    ####
