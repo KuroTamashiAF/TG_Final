@@ -7,7 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 from database.orm_qerry import (
     orm_add_product,
-    orm_all_products,
+    orm_get_category_products,
     orm_delete_product,
     orm_get_product,
     orm_update_product,
@@ -48,7 +48,7 @@ async def admin_features(message: types.Message):
 
 @admin_router.message(F.text == "Ассортимент")
 async def starring_at_product(message: types.Message, session: AsyncSession):
-    for product in await orm_all_products(session):
+    for product in await orm_get_category_products(session):
         await message.answer_photo(
             product.image,
             caption=f"<strong>{product.name}\

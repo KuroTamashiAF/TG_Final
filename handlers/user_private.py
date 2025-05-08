@@ -7,7 +7,7 @@ from keyboards.reply_keyboard import (
     secondary_function_kb,
 )
 from aiogram.utils.formatting import Bold, as_marked_section
-from database.orm_qerry import orm_all_products
+from database.orm_qerry import orm_get_category_products
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -27,7 +27,7 @@ async def start_cmd(message: types.Message):
 @user_private_router.message(F.text.lower() == "каталог")
 @user_private_router.message(Command("catalog"))
 async def menu_cmd(message: types.Message, session:AsyncSession):
-    for product in await orm_all_products(session):
+    for product in await orm_get_category_products(session): # добавить category_id
         await message.answer_photo(
             product.image,
             caption=f"<strong>{product.name}\
