@@ -8,8 +8,7 @@ description_for_info_pages = {
     "about": '''AMBRETTE PARFUME мы являмся официальным дистрибьютором 
     Парфюмерной компания MG International Fragrance Company на территории России 🇷🇺. 
 Отправка по всей России. 
-✈🚇🚌🚢🚗
-''',
+✈🚇🚌🚢🚗 ''',
     "payment": as_marked_section(
         Bold("Варианты оплаты:"),
         "Картой в боте",

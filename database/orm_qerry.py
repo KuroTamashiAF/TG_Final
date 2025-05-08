@@ -104,7 +104,7 @@ async def orm_create_categories(session: AsyncSession, categories: list):
     result = await session.execute(query)
     if result.first():
         return
-    await session.add_all([Category(name=name) for name in categories])
+    session.add_all([Category(name=name) for name in categories])
     await session.commit()
 
 

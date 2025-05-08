@@ -52,7 +52,7 @@ dp.include_router(admin_router)
 
 
 async def main():
-    # await create_db()
+    await create_db()
     # await drop_db()
     dp.update.middleware(DataBaseSession(session_pool=session_marker))
     await bot.delete_webhook(drop_pending_updates=True)

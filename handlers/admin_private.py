@@ -11,6 +11,7 @@ from database.orm_qerry import (
     orm_delete_product,
     orm_get_product,
     orm_update_product,
+    orm_get_categories,
 )
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply_keyboard import ADMIN_KB, start_kb
@@ -29,13 +30,16 @@ class AddProduct(StatesGroup):
     # Шаги состояний
     name = State()
     description = State()
+    category = State()
     price = State()
     image = State()
+
     product_for_change = None
 
     texts = {
         "AddProduct:name": "Введите название заново:",
         "AddProduct:description": "Введите описание заново:",
+        "AddProduct:category": "Выберите категорию заново",
         "AddProduct:price": "Введите стоимость заново:",
         "AddProduct:image": "Этот стейт последний, поэтому...",
     }
@@ -170,13 +174,19 @@ async def add_name2(message: types.Message, state: FSMContext):
 
 # Ловим данные для состояние description и потом меняем состояние на price
 @admin_router.message(AddProduct.description, or_f(F.text, F.text == "."))
-async def add_description(message: types.Message, state: FSMContext):
+async def add_description(
+    message: types.Message, state: FSMContext, session: AsyncSession
+):
     if message.text == ".":
         await state.update_data(description=AddProduct.product_for_change.description)
     else:
         await state.update_data(description=message.text)
-    await message.answer("Введите стоимость товара")
-    await state.set_state(AddProduct.price)
+    categories = orm_get_categories(session)
+    btn = {category.name: str(category, id) for category in categories}
+    await message.answer("Выберите категорию:", reply_markup=get_call_back_btns(btns=btn))
+    await state.set_state(AddProduct.category)
+
+
 
 
 # Хендлер для отлова некорректных вводов для состояния description
