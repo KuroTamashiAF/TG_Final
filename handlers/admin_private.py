@@ -12,7 +12,8 @@ from database.orm_qerry import (
     orm_get_product,
     orm_update_product,
     orm_get_categories,
-
+    orm_get_info_pages,
+    orm_change_banner_image,
 )
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply_keyboard import ADMIN_KB, start_kb
@@ -61,9 +62,9 @@ async def admin_сategory_choice(message: types.Message, session: AsyncSession):
     )
 
 
-@admin_router.callback_query(F.data.startswith('category_'))
+@admin_router.callback_query(F.data.startswith("category_"))
 async def starring_at_product(callback: types.CallbackQuery, session: AsyncSession):
-    category_id = callback.data.split('_')[-1]
+    category_id = callback.data.split("_")[-1]
     for product in await orm_get_category_products(session, int(category_id)):
         await callback.message.answer_photo(
             product.image,
@@ -74,13 +75,11 @@ async def starring_at_product(callback: types.CallbackQuery, session: AsyncSessi
                     "Удалить": f"delete_{product.id}",
                     "Изменить": f"change_{product.id}",
                 },
-                sizes=(2,)
+                sizes=(2,),
             ),
         )
     await callback.answer()
     await callback.message.answer("ОК, вот список товаров ⏫")
-
-
 
 
 @admin_router.callback_query(F.data.startswith("delete_"))
@@ -94,6 +93,7 @@ async def delete_product(callback: types.CallbackQuery, session: AsyncSession):
 @admin_router.message(F.text == "Главная")
 async def on_main(message: types.Message):
     await message.answer("Главная", reply_markup=start_kb)
+
 
 #################################################__FSM__#################################
 # изменение уже существующего товара!!!!!!!!!
@@ -112,7 +112,8 @@ async def change_product_callback(
     )
     await state.set_state(AddProduct.name)
 
-#name = State()
+
+# name = State()
 # Становимся в состояние ожидания ввода name
 @admin_router.message(StateFilter(None), F.text == "Добавить товар")
 async def add_product(message: types.Message, state: FSMContext):
@@ -161,7 +162,8 @@ async def back_step_handler(message: types.Message, state: FSMContext) -> None:
             return
         previous = step
 
-#name = State()
+
+# name = State()
 # Ловим данные для состояние name и потом меняем состояние на description
 @admin_router.message(AddProduct.name, F.text)
 async def add_name(message: types.Message, state: FSMContext):
@@ -189,7 +191,7 @@ async def add_name2(message: types.Message, state: FSMContext):
 
 
 # Ловим данные для состояние description и потом меняем состояние на category
-@admin_router.message(AddProduct.description,F.text)
+@admin_router.message(AddProduct.description, F.text)
 async def add_description(
     message: types.Message, state: FSMContext, session: AsyncSession
 ):
@@ -197,7 +199,7 @@ async def add_description(
         await state.update_data(description=AddProduct.product_for_change.description)
     else:
         await state.update_data(description=message.text)
-    categories = await orm_get_categories(session)  
+    categories = await orm_get_categories(session)
     btn = {category.name: str(category.id) for category in categories}
     await message.answer(
         "Выберите категорию:", reply_markup=get_call_back_btns(btns=btn)
@@ -210,24 +212,28 @@ async def add_description(
 async def add_description2(message: types.Message, state: FSMContext):
     await message.answer("Вы ввели не допустимые данные, введите текст описания товара")
 
+
 # Ловим callback выбора категории
 @admin_router.callback_query(AddProduct.category)
-async def category_choice(callback: types.CallbackQuery, state: FSMContext , session: AsyncSession):
-    if int(callback.data) in [category.id for category in await orm_get_categories(session)]:
+async def category_choice(
+    callback: types.CallbackQuery, state: FSMContext, session: AsyncSession
+):
+    if int(callback.data) in [
+        category.id for category in await orm_get_categories(session)
+    ]:
         await callback.answer()
         await state.update_data(category=callback.data)
-        await callback.message.answer('Теперь введите цену товара.')
+        await callback.message.answer("Теперь введите цену товара.")
         await state.set_state(AddProduct.price)
     else:
-        await callback.message.answer('Выберите катеорию из кнопок.')
+        await callback.message.answer("Выберите катеорию из кнопок.")
         await callback.answer()
 
-#Ловим любые некорректные действия, кроме нажатия на кнопку выбора категории
+
+# Ловим любые некорректные действия, кроме нажатия на кнопку выбора категории
 @admin_router.message(AddProduct.category)
 async def category_choice2(message: types.Message, state: FSMContext):
-    await message.answer("'Выберите катеорию из кнопок.'") 
-
-
+    await message.answer("'Выберите категорию из кнопок.'")
 
 
 # Ловим данные для состояние price и потом меняем состояние на image
@@ -280,3 +286,36 @@ async def add_image(message: types.Message, state: FSMContext, session: AsyncSes
 @admin_router.message(AddProduct.image)
 async def add_image2(message: types.Message, state: FSMContext):
     await message.answer("Отправьте фото")
+
+
+############################__FSM__BANNER__###########################################
+class AddBanner(StatesGroup):
+    image = State()
+
+
+@admin_router.message(F.text == "Добавить/Изменить баннер")
+async def add_banner_image(
+    message: types.Message, state: FSMContext, session: AsyncSession
+):
+    pages_names = [page.name for page in await orm_get_info_pages(session)]
+    await message.answer(
+        f"Отправте фото баннера. \n В описании к фото укажите для какой страницы ->: \n {",".join(pages_names)}"
+    )
+    await state.set_state(AddBanner.image)
+
+
+@admin_router.message(AddBanner.image, F.photo)
+async def add_banner(message: types.Message, state: FSMContext, session: AsyncSession):
+    image_id = message.photo[-1].file_id
+    for_page = message.caption.strip()
+
+    pages_names = [page.name for page in await orm_get_info_pages(session)]
+
+    if for_page not in pages_names:
+        await message.answer(
+            f"Введите название страницы из списка: \n {'-||-'.join(pages_names)}"
+        )
+        return
+    await orm_change_banner_image(session, for_page, image_id)
+    await message.answer("Баннер добавлен/изменен")
+    await state.clear()
