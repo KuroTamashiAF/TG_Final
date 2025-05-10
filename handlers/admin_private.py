@@ -319,3 +319,7 @@ async def add_banner(message: types.Message, state: FSMContext, session: AsyncSe
     await orm_change_banner_image(session, for_page, image_id)
     await message.answer("Баннер добавлен/изменен")
     await state.clear()
+
+
+
+
