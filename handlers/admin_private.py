@@ -12,6 +12,7 @@ from database.orm_qerry import (
     orm_get_product,
     orm_update_product,
     orm_get_categories,
+
 )
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply_keyboard import ADMIN_KB, start_kb
@@ -51,21 +52,35 @@ async def admin_features(message: types.Message):
 
 
 @admin_router.message(F.text == "Ассортимент")
-async def starring_at_product(message: types.Message, session: AsyncSession):
-    for product in await orm_get_category_products(session):
-        await message.answer_photo(
+async def admin_сategory_choice(message: types.Message, session: AsyncSession):
+    categories = await orm_get_categories(session)
+    btn = {category.name: f"category_{category.id}" for category in categories}
+
+    await message.answer(
+        "Выберите категорию", reply_markup=get_call_back_btns(btns=btn)
+    )
+
+
+@admin_router.callback_query(F.data.startswith('category_'))
+async def starring_at_product(callback: types.CallbackQuery, session: AsyncSession):
+    category_id = callback.data.split('_')[-1]
+    for product in await orm_get_category_products(session, int(category_id)):
+        await callback.message.answer_photo(
             product.image,
             caption=f"<strong>{product.name}\
-            </strong> \n {product.description} \n Стоимость:{round(product.price,2)} руб за мл",
+                    </strong>\n{product.description}\nСтоимость: {round(product.price, 2)}",
             reply_markup=get_call_back_btns(
                 btns={
                     "Удалить": f"delete_{product.id}",
                     "Изменить": f"change_{product.id}",
-                }
+                },
+                sizes=(2,)
             ),
         )
+    await callback.answer()
+    await callback.message.answer("ОК, вот список товаров ⏫")
 
-    await message.answer("ОК, вот список товаров")
+
 
 
 @admin_router.callback_query(F.data.startswith("delete_"))
@@ -80,8 +95,9 @@ async def delete_product(callback: types.CallbackQuery, session: AsyncSession):
 async def on_main(message: types.Message):
     await message.answer("Главная", reply_markup=start_kb)
 
-
+#################################################__FSM__#################################
 # изменение уже существующего товара!!!!!!!!!
+# name = State()
 @admin_router.callback_query(StateFilter(None), F.data.startswith("change_"))
 async def change_product_callback(
     callback: types.CallbackQuery, state: FSMContext, session: AsyncSession
@@ -96,7 +112,7 @@ async def change_product_callback(
     )
     await state.set_state(AddProduct.name)
 
-
+#name = State()
 # Становимся в состояние ожидания ввода name
 @admin_router.message(StateFilter(None), F.text == "Добавить товар")
 async def add_product(message: types.Message, state: FSMContext):
@@ -145,11 +161,11 @@ async def back_step_handler(message: types.Message, state: FSMContext) -> None:
             return
         previous = step
 
-
+#name = State()
 # Ловим данные для состояние name и потом меняем состояние на description
-@admin_router.message(AddProduct.name, or_f(F.text, F.text == "."))
+@admin_router.message(AddProduct.name, F.text)
 async def add_name(message: types.Message, state: FSMContext):
-    if message.text == ".":
+    if message.text == "." and AddProduct.product_for_change:
         await state.update_data(name=AddProduct.product_for_change.name)
     else:
         # Здесь можно сделать какую либо дополнительную проверку
@@ -172,21 +188,21 @@ async def add_name2(message: types.Message, state: FSMContext):
     await message.answer("Вы ввели не допустимые данные, введите текст названия товара")
 
 
-# Ловим данные для состояние description и потом меняем состояние на price
-@admin_router.message(AddProduct.description, or_f(F.text, F.text == "."))
+# Ловим данные для состояние description и потом меняем состояние на category
+@admin_router.message(AddProduct.description,F.text)
 async def add_description(
     message: types.Message, state: FSMContext, session: AsyncSession
 ):
-    if message.text == ".":
+    if message.text == "." and AddProduct.product_for_change:
         await state.update_data(description=AddProduct.product_for_change.description)
     else:
         await state.update_data(description=message.text)
-    categories = orm_get_categories(session)
-    btn = {category.name: str(category, id) for category in categories}
-    await message.answer("Выберите категорию:", reply_markup=get_call_back_btns(btns=btn))
+    categories = await orm_get_categories(session)  
+    btn = {category.name: str(category.id) for category in categories}
+    await message.answer(
+        "Выберите категорию:", reply_markup=get_call_back_btns(btns=btn)
+    )
     await state.set_state(AddProduct.category)
-
-
 
 
 # Хендлер для отлова некорректных вводов для состояния description
@@ -194,11 +210,30 @@ async def add_description(
 async def add_description2(message: types.Message, state: FSMContext):
     await message.answer("Вы ввели не допустимые данные, введите текст описания товара")
 
+# Ловим callback выбора категории
+@admin_router.callback_query(AddProduct.category)
+async def category_choice(callback: types.CallbackQuery, state: FSMContext , session: AsyncSession):
+    if int(callback.data) in [category.id for category in await orm_get_categories(session)]:
+        await callback.answer()
+        await state.update_data(category=callback.data)
+        await callback.message.answer('Теперь введите цену товара.')
+        await state.set_state(AddProduct.price)
+    else:
+        await callback.message.answer('Выберите катеорию из кнопок.')
+        await callback.answer()
+
+#Ловим любые некорректные действия, кроме нажатия на кнопку выбора категории
+@admin_router.message(AddProduct.category)
+async def category_choice2(message: types.Message, state: FSMContext):
+    await message.answer("'Выберите катеорию из кнопок.'") 
+
+
+
 
 # Ловим данные для состояние price и потом меняем состояние на image
-@admin_router.message(AddProduct.price, or_f(F.text, F.text == "."))
+@admin_router.message(AddProduct.price, F.text)
 async def add_price(message: types.Message, state: FSMContext):
-    if message.text == ".":
+    if message.text == "." and AddProduct.product_for_change:
         await state.update_data(price=AddProduct.product_for_change.price)
     else:
         try:
