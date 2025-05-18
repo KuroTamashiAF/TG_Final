@@ -1,14 +1,11 @@
 from aiogram import types, Router, F
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart
 import aiofiles
 from filters.chat_types import ChatTypeFilter
-from keyboards.reply_keyboard import (
-    start_kb,
-    secondary_function_kb,
-)
-from aiogram.utils.formatting import Bold, as_marked_section
-from database.orm_qerry import orm_get_category_products
+
 from sqlalchemy.ext.asyncio import AsyncSession
+from handlers.menu_processing import get_menu_content
+from keyboards.inline_keyboard import MenuCallBack
 
 
 user_private_router = Router()
@@ -16,7 +13,23 @@ user_private_router.message.filter(ChatTypeFilter(["private"]))
 
 
 @user_private_router.message(CommandStart())
-async def start_cmd(message: types.Message): ...
+async def start_cmd(message: types.Message, session: AsyncSession):
+    media, reply_markup = await get_menu_content(session, level=0, menu_name="main")
+
+    await message.answer_photo(
+        media.media, caption=media.caption, reply_markup=reply_markup
+    )
+
+
+@user_private_router.callback_query(MenuCallBack.filter())
+async def user_menu(
+    callback: types.CallbackQuery, callback_data: MenuCallBack, session: AsyncSession
+):
+    media, reply_markup = await get_menu_content(
+        session, level=callback_data.level, menu_name=callback_data.menu_name
+    )
+    await callback.message.edit_media(media=media, reply_markup=reply_markup)
+    await callback.answer()
 
 
 
@@ -24,16 +37,14 @@ async def start_cmd(message: types.Message): ...
 
 
 
-
-
-
+    
 
 
 # УДАЛИТЬ ВСЕ ЧТО НИЖЕ
 # @user_private_router.message(F.text.lower() == "каталог")
 # @user_private_router.message(Command("catalog"))
 # async def menu_cmd(message: types.Message, session:AsyncSession):
-#     for product in await orm_get_category_products(session): # добавить category_id
+#     for product in await orm_get_category_products(session): z# добавить category_id
 #         await message.answer_photo(
 #             product.image,
 #             caption=f"<strong>{product.name}\
