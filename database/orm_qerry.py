@@ -172,11 +172,10 @@ async def orm_add_user(
     query = select(User).where(User.user_id == user_id)
     result = await session.execute(query)
     if result.first() is None:
-        user = User(
-            user_id=user_id, first_name=first_name, last_name=last_name, phone=phone
+         session.add(
+            User(user_id=user_id, first_name=first_name, last_name=last_name, phone=phone)
         )
-        await session.add(user)
-        session.commit()
+    await session.commit()
 
 
 #################################### Работа с Корзинами ####################################
@@ -191,12 +190,12 @@ async def orm_add_to_cart(session: AsyncSession, user_id: int, product_id: int):
     cart = result.scalar()
     if cart:
         cart.quantity += 1
-        session.commit()
+        await session.commit()
         return cart
     else:  # попробовать удалить else
         cart = Cart(user_id=user_id, product_id=product_id, quantity=1)
         session.add(cart)
-        session.commit()
+        await session.commit()
 
 
 async def orm_get_user_carts(session: AsyncSession, user_id: int):
@@ -234,5 +233,5 @@ async def orm_reduce_product_in_cart(
         await orm_delete_from_cart(
             session=session, user_id=user_id, product_id=product_id
         )
-        session.commit()
+        await session.commit()
         return True
