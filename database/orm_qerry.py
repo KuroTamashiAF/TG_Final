@@ -1,6 +1,4 @@
 import math
-from os import name
-from certifi import where
 from sqlalchemy import select, update, delete
 from database.models import Product, Banner, Cart, Category, User
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -200,7 +198,7 @@ async def orm_add_to_cart(session: AsyncSession, user_id: int, product_id: int):
 
 async def orm_get_user_carts(session: AsyncSession, user_id: int):
     query = (
-        select(User).where(Cart.user_id == user_id).options(joinedload(Cart.product))
+        select(Cart).where(Cart.user_id == user_id).options(joinedload(Cart.product))
     )
     result = await session.execute(query)
     return result.scalars().all()
@@ -216,7 +214,7 @@ async def orm_reduce_product_in_cart(
     session: AsyncSession, user_id: int, product_id: int
 ):
     query = (
-        delete(Cart)
+        select(Cart)
         .where(Cart.user_id == user_id, Cart.product_id == product_id)
         .options(joinedload(Cart.product))
     )
@@ -226,7 +224,7 @@ async def orm_reduce_product_in_cart(
     if not cart:
         return
     if cart.quantity > 1:
-        cart.quantity = -1
+        cart.quantity -= 1
         await session.commit()
         return True
     else:
@@ -234,4 +232,4 @@ async def orm_reduce_product_in_cart(
             session=session, user_id=user_id, product_id=product_id
         )
         await session.commit()
-        return True
+        return False

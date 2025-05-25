@@ -86,24 +86,117 @@ def products_btns(
     )
     keyboard.adjust(*sizes)
 
-
-    row =[]
+    row = []
     for text, menu_name in paginator_btns.items():
         if menu_name == "next":
-            row.append(InlineKeyboardButton(text=text,
-                                            callback_data=MenuCallBack(level=level,
-                                                                       menu_name=menu_name,
-                                                                       category=category,
-                                                                       page=page+1).pack()))
+            row.append(
+                InlineKeyboardButton(
+                    text=text,
+                    callback_data=MenuCallBack(
+                        level=level,
+                        menu_name=menu_name,
+                        category=category,
+                        page=page + 1,
+                    ).pack(),
+                )
+            )
         if menu_name == "previous":
-            row.append(InlineKeyboardButton(text=text,
-                                            callback_data=MenuCallBack(level=level,
-                                                                       menu_name=menu_name,
-                                                                       category=category,
-                                                                       page=page-1).pack()))
+            row.append(
+                InlineKeyboardButton(
+                    text=text,
+                    callback_data=MenuCallBack(
+                        level=level,
+                        menu_name=menu_name,
+                        category=category,
+                        page=page - 1,
+                    ).pack(),
+                )
+            )
     return keyboard.row(*row).as_markup()
 
-        
+
+def get_btns_in_user_cart_products(
+    *,
+    level: int,
+    page: int | None,
+    paginator_btns: dict | None,
+    product_id: int | None,
+    sizes: tuple[int] = (3,)
+):
+
+    keyboard = InlineKeyboardBuilder()
+    if page:
+        keyboard.button(
+            text="Удалить",
+            callback_data=MenuCallBack(
+                level=level, menu_name="delete", product_id=product_id, page=page
+            ),
+        )
+
+        keyboard.button(
+            text="-1",
+            callback_data=MenuCallBack(
+                level=level, menu_name="decrement", product_id=product_id, page=page
+            ),
+        )
+        keyboard.button(
+            text="+1",
+            callback_data=MenuCallBack(
+                level=level, menu_name="incremrnt", product_id=product_id, page=page
+            ),
+        )
+        keyboard.adjust(*sizes)
+
+        row = []
+        for text, menu_name in paginator_btns.items():
+            if menu_name == "next":
+                row.append(
+                    InlineKeyboardButton(
+                        text=text,
+                        callback_data=MenuCallBack(
+                            level=level,
+                            menu_name=menu_name,
+                            page=page + 1,
+                        ).pack(),
+                    )
+                )
+            if menu_name == "previous":
+                row.append(
+                    InlineKeyboardButton(
+                        text=text,
+                        callback_data=MenuCallBack(
+                            level=level,
+                            menu_name=menu_name,
+                            page=page - 1,
+                        ).pack(),
+                    )
+                )
+        keyboard.row(*row)
+        row1 = []
+        row1.append(
+            InlineKeyboardButton(
+                text="На главную 🏠",
+                callback_data=MenuCallBack(
+                    level=0,
+                    menu_name="main",
+                ).pack(),
+            )
+        )
+        row1.append(
+            InlineKeyboardButton(
+                text="Заказать ",
+                callback_data=MenuCallBack(
+                    level=0,
+                    menu_name="order",
+                ).pack(),
+            )
+        )
+        return keyboard.row(*row1).as_markup()
+    else:
+        keyboard.button(
+            text="На главную 🏠", callback_data=MenuCallBack(level=0, menu_name="main")
+        )
+        return keyboard.adjust(*sizes).as_markup()
 
 
 def get_call_back_btns(*, btns: dict[str, str], sizes: tuple[int] = (2,)):
