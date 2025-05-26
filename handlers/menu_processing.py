@@ -10,6 +10,8 @@ from database.orm_qerry import (
     orm_get_user_carts,
 )
 from aiogram.types import InputMediaPhoto
+from aiogram import Bot  # TEST
+from handlers.user_group import CHAT_ID_ORDERS  # TEST
 
 from keyboards.inline_keyboard import (
     get_user_main_btns,
@@ -17,6 +19,8 @@ from keyboards.inline_keyboard import (
     products_btns,
     get_btns_in_user_cart_products,
 )
+
+# from utils.order_creating import creating_order
 
 
 async def main_menu(session: AsyncSession, level: int, menu_name: str):
@@ -81,6 +85,7 @@ async def carts_menu(
     user_id: int,
     product_id: int,
 ):
+
     if menu_name == "delete":
         await orm_delete_from_cart(session, user_id, product_id)
         if page > 1:
@@ -145,4 +150,11 @@ async def get_menu_content(
     elif level == 2:
         return await products(session, level, category, page)
     elif level == 3:
-        return await carts_menu(session, level, menu_name, page, user_id, product_id)
+        return await carts_menu(
+            session,
+            level,
+            menu_name,
+            page,
+            user_id,
+            product_id,
+        )

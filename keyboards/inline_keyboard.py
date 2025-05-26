@@ -183,13 +183,7 @@ def get_btns_in_user_cart_products(
             )
         )
         row1.append(
-            InlineKeyboardButton(
-                text="Заказать ",
-                callback_data=MenuCallBack(
-                    level=0,
-                    menu_name="order",
-                ).pack(),
-            )
+            InlineKeyboardButton(text="Заказать ", callback_data="order_callback"),
         )
         return keyboard.row(*row1).as_markup()
     else:

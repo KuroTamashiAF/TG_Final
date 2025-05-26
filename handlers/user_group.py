@@ -6,7 +6,7 @@ from aiogram import Bot
 
 user_group_router = Router()
 user_group_router.message.filter(ChatTypeFilter(["group", "supergroupe"]))
-
+CHAT_ID_ORDERS = None
 forbidden_words = {"долбо", "ящер", "лох", "идиот", "сволочь", "гад", "тупица"}
 
 

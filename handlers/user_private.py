@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from handlers.menu_processing import get_menu_content
 from keyboards.inline_keyboard import MenuCallBack
 from database.orm_qerry import orm_add_user, orm_add_to_cart
+from aiogram import Bot
 
 
 user_private_router = Router()
@@ -39,9 +40,17 @@ async def start_cmd(message: types.Message, session: AsyncSession):
     )
 
 
+@user_private_router.callback_query(F.data == "order_callback")
+async def orderd(callback: types.CallbackQuery):
+    await callback.answer(text="Заказ принят в обработку")
+    await callback.message.answer()
+
+
 @user_private_router.callback_query(MenuCallBack.filter())
 async def user_menu(
-    callback: types.CallbackQuery, callback_data: MenuCallBack, session: AsyncSession
+    callback: types.CallbackQuery,
+    callback_data: MenuCallBack,
+    session: AsyncSession,
 ):
     if callback_data.menu_name == "add_to_cart":
         await add_to_cart(callback, callback_data, session)
