@@ -58,7 +58,7 @@ async def products(session: AsyncSession, level: int, category: int, page: int):
         media=product.image,
         caption=f"<strong>{product.name}</strong>\n\
             {product.description}\n\
-            Стоимость: {round(product.price),2}\n\
+            Стоимость: {round(product.price,2)}\n\
                 <strong>Товар {paginator.page} из {paginator.pages}</strong>",
     )
     paginator_btns = pages(paginator)
