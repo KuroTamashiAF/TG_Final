@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from handlers.menu_processing import get_menu_content
 from keyboards.inline_keyboard import MenuCallBack
 from database.orm_qerry import orm_add_user, orm_add_to_cart
-from aiogram import Bot
+from utils.order_creating import creating_order
 
 
 user_private_router = Router()
@@ -17,7 +17,7 @@ user_private_router.message.filter(ChatTypeFilter(["private"]))
 async def add_to_cart(
     callback: types.CallbackQuery, callback_data: MenuCallBack, session: AsyncSession
 ):
-    user = callback.from_user
+    user = callback.from_user           # Добавить принты и посмотреть что и как записываеься
     await orm_add_user(
         session=session,
         user_id=user.id,
@@ -38,12 +38,6 @@ async def start_cmd(message: types.Message, session: AsyncSession):
     await message.answer_photo(
         media.media, caption=media.caption, reply_markup=reply_markup
     )
-
-
-@user_private_router.callback_query(F.data == "order_callback")
-async def orderd(callback: types.CallbackQuery):
-    await callback.answer(text="Заказ принят в обработку")
-    await callback.message.answer()
 
 
 @user_private_router.callback_query(MenuCallBack.filter())
@@ -69,6 +63,19 @@ async def user_menu(
     await callback.message.edit_media(media=media, reply_markup=reply_markup)
     await callback.answer()
 
+
+@user_private_router.callback_query(F.data == "order_callback")
+async def orderd(callback: types.CallbackQuery, session: AsyncSession):
+    admins_list = callback.bot.my_admins_list
+    user_id = callback.from_user.id
+    order_str = await creating_order(
+        user_id=user_id, callback=callback, session=session
+    )
+
+    for id_admins in admins_list:  # [780962046, 8097195782, 1506212028]
+        if id_admins != 8097195782:
+            await callback.bot.send_message(chat_id=id_admins, text=order_str)
+    await callback.answer(text="Заказ оформлен мы с вами свяжимся позже")
 
 # УДАЛИТЬ ВСЕ ЧТО НИЖЕ
 # @user_private_router.message(F.text.lower() == "каталог")
