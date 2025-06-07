@@ -170,8 +170,10 @@ async def orm_add_user(
     query = select(User).where(User.user_id == user_id)
     result = await session.execute(query)
     if result.first() is None:
-         session.add(
-            User(user_id=user_id, first_name=first_name, last_name=last_name, phone=phone)
+        session.add(
+            User(
+                user_id=user_id, first_name=first_name, last_name=last_name, phone=phone
+            )
         )
     await session.commit()
 
@@ -233,3 +235,9 @@ async def orm_reduce_product_in_cart(
         )
         await session.commit()
         return False
+
+
+async def orm_delete_all_carts_user(session: AsyncSession, user_id: int):
+    query = delete(Cart).where(Cart.user_id == user_id)
+    await session.execute(query)
+    await session.commit()

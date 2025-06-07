@@ -10,8 +10,8 @@ from database.orm_qerry import (
     orm_get_user_carts,
 )
 from aiogram.types import InputMediaPhoto
-from aiogram import Bot  # TEST
-from handlers.user_group import CHAT_ID_ORDERS  # TEST
+
+
 
 from keyboards.inline_keyboard import (
     get_user_main_btns,
@@ -118,7 +118,7 @@ async def carts_menu(
         )
         image = InputMediaPhoto(
             media=cart.product.image,
-            caption=f"<strong>{cart.product.name}</strong>\n{cart.product.price}$ x {cart.quantity} = {cart_price}$\
+            caption=f"<strong>{cart.product.name}</strong>\n{round(cart.product.price,2)}руб x {cart.quantity} = {cart_price}руб\
                     \nТовар {paginator.page} из {paginator.pages} в корзине.\nОбщая стоимость товаров в корзине {total_price}",
         )
 

@@ -41,16 +41,6 @@ dp.include_routers(
 dp.include_router(user_group_router)
 dp.include_router(admin_router)
 
-# async def on_startup(bot):
-#     run_params  = False
-#     if run_params:
-#         await drop_db()
-
-#     await create_db()
-
-# async def on_shootdown(bot):
-#     print("Бот отключен")
-
 
 async def main():
     await create_db()
