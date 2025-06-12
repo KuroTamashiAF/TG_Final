@@ -134,13 +134,13 @@ def get_btns_in_user_cart_products(
         )
 
         keyboard.button(
-            text="-1",
+            text="-10мЛ",
             callback_data=MenuCallBack(
                 level=level, menu_name="decrement", product_id=product_id, page=page
             ),
         )
         keyboard.button(
-            text="+1",
+            text="+10мЛ",
             callback_data=MenuCallBack(
                 level=level, menu_name="incremrnt", product_id=product_id, page=page
             ),

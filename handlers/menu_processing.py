@@ -118,7 +118,7 @@ async def carts_menu(
         )
         image = InputMediaPhoto(
             media=cart.product.image,
-            caption=f"<strong>{cart.product.name}</strong>\n{round(cart.product.price,2)}руб x {cart.quantity} = {cart_price}руб\
+            caption=f"<strong>{cart.product.name}</strong>\n{round(cart.product.price,2)}руб <strong>10мЛ</strong> x <strong>{cart.quantity}</strong> = {cart_price}руб\
                     \nТовар {paginator.page} из {paginator.pages} в корзине.\nОбщая стоимость товаров в корзине {total_price}",
         )
 
