@@ -106,6 +106,31 @@ async def orm_create_categories(session: AsyncSession, categories: list):
     await session.commit()
 
 
+# Добавление новой категории
+async def orm_add_new_category(session:AsyncSession, name:str):
+    query = select(Category).where(Category.name == name)
+    result = await session.execute(query)
+    if result.first():
+        return
+    session.add(Category(name=name))
+    await session.commit()
+
+# Удаление категорий всех
+# удаление тех категорий которе нужны были для запуска бота 
+# добавление новых категорий до того как загружать товары 
+async def orm_delete_all_old_categories(session:AsyncSession):
+    query = delete(Category)
+    await session.execute(query)
+    await session.commit()
+
+# Удаление категории по имени 
+
+async def orm_delete_categpry_on_name(session:AsyncSession, name:str):
+    query = delete(Category).where(Category.name == name)
+    await session.execute(query)
+    await session.commit()
+    
+
 ##########################Админка добавить/изменить/удалить товары ######################################
 
 

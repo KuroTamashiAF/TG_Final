@@ -20,10 +20,6 @@ from handlers.admin_private import admin_router
 
 from handlers.user_group import user_group_router
 
-# from common.bot_cmd_list import private
-
-
-# ALOWED_UPDATES = ["message", "edited_message"]
 
 bot = Bot(
     token=os.getenv("TG_TOKEN"), default=DefaultBotProperties(parse_mode=ParseMode.HTML)

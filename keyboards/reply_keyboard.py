@@ -61,6 +61,7 @@ ADMIN_KB = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Добавить товар"), KeyboardButton(text="Ассортимент")],
         [KeyboardButton(text="Добавить/Изменить баннер")],
+        [KeyboardButton(text="Добавить категорию")], [KeyboardButton(text="Удалить категорию")],
     ],
     resize_keyboard=True,
     input_field_placeholder="Выберите действие",

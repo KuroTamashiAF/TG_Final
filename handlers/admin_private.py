@@ -7,6 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 from database.orm_qerry import (
     orm_add_product,
+    orm_delete_categpry_on_name,
     orm_get_category_products,
     orm_delete_product,
     orm_get_product,
@@ -14,6 +15,8 @@ from database.orm_qerry import (
     orm_get_categories,
     orm_get_info_pages,
     orm_change_banner_image,
+    orm_delete_all_old_categories,
+    orm_add_new_category,
 )
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply_keyboard import ADMIN_KB, start_kb
@@ -226,7 +229,7 @@ async def category_choice(
         await callback.message.answer("Теперь введите цену товара.")
         await state.set_state(AddProduct.price)
     else:
-        await callback.message.answer("Выберите катеорию из кнопок.")
+        await callback.message.answer("Выберите категорию из кнопок.")
         await callback.answer()
 
 
@@ -322,4 +325,58 @@ async def add_banner(message: types.Message, state: FSMContext, session: AsyncSe
 
 
 
+############################__FSM__CATEGORY###########################################
+class AddCategory(StatesGroup):
+    category = State()
+
+# @admin_router.message(F.text == "Категории")
+# async def add_choose_action(message: types.Message):
+#     await message.answer("Выберите что вы хотите сделать? ⬇️", reply_markup=ADMIN_KB_CATEGORY)
+   
+
+
+
+@admin_router.message(F.text == "Добавить категорию")
+async def add_category_name(message: types.Message, state: FSMContext, session: AsyncSession):   
+    await message.answer("Введите наименование категории")
+    await state.set_state(AddCategory.category)
+
+@admin_router.message(AddCategory.category, F.text)
+async def add_category(message: types.Message, state: FSMContext, session: AsyncSession):
+    categories = await orm_get_categories(session)
+    for category in categories:
+        if category.name  == "Категория_1":
+            print("БЫЛО УДАЛЕНИЕ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            await orm_delete_all_old_categories(session)
+
+    await orm_add_new_category(session, message.text)
+    await message.answer(f"Категория {message.text} успешно добавлена")
+    await state.clear()
+
+@admin_router.message(AddCategory.category)
+async def add_category_error(message: types.Message, state: FSMContext):
+    await message.answer("Введите правильное наименование категории")
+
+
+
+
+@admin_router.message(F.text == "Удалить категорию")
+async def enter_name_category_delete(message: types.Message, session:AsyncSession):
+    categories = await orm_get_categories(session)
+    btns = {category.name : f"categoryDel_{category.name}" for category in categories}
+    await message.answer("Выберете категорию для удаления", reply_markup=get_call_back_btns(btns=btns))
+
+
+
+@admin_router.callback_query(F.data.startswith("categoryDel_"))
+async def delete_category(callback: types.CallbackQuery, session: AsyncSession):
+    category_name  = callback.data.split('_')[-1]
+    await orm_delete_categpry_on_name(session,category_name)
+    await callback.answer("Категория удалена")
+
+
+
+
+
+    
 
