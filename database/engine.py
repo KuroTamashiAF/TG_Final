@@ -6,8 +6,8 @@ from database.orm_qerry import  orm_create_categories, orm_add_banner_descriptio
 
 from database.models import Base, Product
 
-# engine = create_async_engine(os.getenv("DB_LITE"), echo=True)
-engine = create_async_engine(os.getenv("DB_URL"), echo=True)
+engine = create_async_engine(os.getenv("DB_LITE"), echo=True)
+# engine = create_async_engine(os.getenv("DB_URL"), echo=True)
 session_marker = async_sessionmaker(
     bind=engine, class_=AsyncSession, expire_on_commit=False
 )
